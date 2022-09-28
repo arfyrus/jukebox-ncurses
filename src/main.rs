@@ -7,11 +7,6 @@ struct Song {
     author: String,
 }
 
-enum TimeType {
-    Seconds,
-    SecAndMins,
-}
-
 impl Song {
     fn new(title: String, length: u32, author: String) -> Song {
         Song {
@@ -35,13 +30,12 @@ fn main() {
     init_pair(REGULAR_PAIR, COLOR_WHITE, COLOR_BLACK);
     init_pair(HIGHLIGHT_PAIR, COLOR_BLACK, COLOR_WHITE);
 
-    let song_label = "Songs".to_string();
-    let playing_label = "Queue".to_string();
+    let song_label = "SONGS".to_string();
+    let playing_label = "QUEUE".to_string();
     let space = 3;
-    let divider = "=";
+    let divider = " ";
 
     let mut curr_y: usize = 0;
-    let mut time_type: TimeType = TimeType::SecAndMins;
     let mut songs: Vec<Song> = vec![
         Song::new(
             "Breaking Bad Theme".to_string(),
@@ -94,31 +88,37 @@ fn main() {
             "Jonaty Garcia".to_string(),
         ),
     ];
+
     let mut now_playing: Vec<Song> = Vec::new();
     loop {
         clear();
         let mut title_w: usize =
             std::cmp::max(song_label.chars().count(), playing_label.chars().count()) + 2;
         let mut author_w: usize = 0;
-        let time_w: u8 = match time_type {
-            TimeType::Seconds => 5,
-            TimeType::SecAndMins => 6,
-        };
+        let time_w: u8 = 6;
         let mut total_time = 0;
+
         for song in songs.iter() {
             title_w = std::cmp::max(song.title.chars().count(), title_w);
             author_w = std::cmp::max(song.author.chars().count(), author_w);
         }
+
         for song in now_playing.iter() {
             title_w = std::cmp::max(song.title.chars().count(), title_w);
             author_w = std::cmp::max(song.author.chars().count(), author_w);
             total_time += song.length;
         }
-        addstr(&format!(
-            "+{:-<1$}+",
-            format!("-[ {} ]-", song_label),
-            title_w + author_w + time_w as usize + space * 2 + 2
-        ));
+        {
+            addch(ACS_ULCORNER());
+            addch(ACS_HLINE());
+            let label = format!(" [ {} ] ", song_label);
+            addstr(&label);
+            for _ in label.chars().count()..(title_w + author_w + time_w as usize + space * 2) {
+                addch(ACS_HLINE());
+            }
+            addch(ACS_HLINE());
+            addch(ACS_URCORNER());
+        }
         for (index, song) in songs.iter().enumerate() {
             mv((index + 1).try_into().unwrap(), 0);
             let pair = if index == curr_y {
@@ -126,28 +126,34 @@ fn main() {
             } else {
                 REGULAR_PAIR
             };
+            addch(ACS_VLINE());
             attron(COLOR_PAIR(pair));
             addstr(&format!(
-                "| {0:<title_w$}{3:^space$}{1:<author_w$}{3:^space$}({2}) |",
+                " {0:<title_w$}{3:^space$}{1:<author_w$}{3:^space$}({2}) ",
                 song.title,
                 song.author,
-                match time_type {
-                    TimeType::Seconds => format!("{:>3}", song.length),
-                    TimeType::SecAndMins => {
-                        let (mins, secs) = song.formal_length();
-                        format!("{mins:0>1}:{secs:0>2}")
-                    }
+                {
+                    let (mins, secs) = song.formal_length();
+                    format!("{mins:0>1}:{secs:0>2}")
                 },
                 divider
             ));
             attroff(COLOR_PAIR(pair));
+            addch(ACS_VLINE());
         }
         mv((songs.len() + 1).try_into().unwrap(), 0);
-        addstr(&format!(
-            "+{:-<1$}+",
-            format!("-[ {} ]-", playing_label),
-            title_w + author_w + time_w as usize + space * 2 + 2
-        ));
+        {
+            addch(ACS_LTEE());
+            addch(ACS_HLINE());
+            let label = format!(" [ {} ] ", playing_label);
+            addstr(&label);
+            for _ in label.chars().count()..(title_w + author_w + time_w as usize + space * 2) {
+                addch(ACS_HLINE());
+            }
+            addch(ACS_HLINE());
+            addch(ACS_RTEE());
+            addstr(&format!("\n"));
+        }
         for (index, song) in now_playing.iter().enumerate() {
             mv((index + songs.len() + 2).try_into().unwrap(), 0);
             let pair = if curr_y >= songs.len() && index == curr_y - songs.len() {
@@ -155,40 +161,53 @@ fn main() {
             } else {
                 REGULAR_PAIR
             };
+            addch(ACS_VLINE());
             attron(COLOR_PAIR(pair));
             addstr(&format!(
-                "| {0:<title_w$}{3:^space$}{1:<author_w$}{3:^space$}({2}) |",
+                " {0:<title_w$}{3:^space$}{1:<author_w$}{3:^space$}({2}) ",
                 song.title,
                 song.author,
-                match time_type {
-                    TimeType::Seconds => format!("{:>3}", song.length),
-                    TimeType::SecAndMins => {
-                        let (mins, secs) = song.formal_length();
-                        format!("{mins:0>1}:{secs:0>2}")
-                    }
+                {
+                    let (mins, secs) = song.formal_length();
+                    format!("{mins:0>1}:{secs:0>2}")
                 },
                 divider
             ));
             attroff(COLOR_PAIR(pair));
+            addch(ACS_VLINE());
+            addstr(&format!("\n"));
         }
-        mv((songs.len() + now_playing.len() + 2).try_into().unwrap(), 0);
+        {
+            addch(ACS_LTEE());
+            for _ in 0..(title_w + author_w + space * 2 + 8) {
+                addch(ACS_HLINE());
+            }
+            addch(ACS_RTEE());
+        }
+        addstr(&format!("\n"));
+        addch(ACS_VLINE());
         addstr(&format!(
-            "+{:-<1$}+\n",
-            "",
-            title_w + author_w + time_w as usize + space * 2 + 2
-        ));
-        addstr(&format!(
-            "| {message:<m_width$} {time:>t_width$} |\n",
+            " {message:<m_width$} {time} ",
             message = "Total time: ",
-            m_width = title_w + author_w + space * 2 - 2,
-            time = format!("({:>2}:{:0>2})", total_time / 60, total_time % 60),
-            t_width = time_w as usize,
+            m_width = title_w + author_w + space * 2 - 4,
+            time = format!(
+                "({}:{:0>2}:{:0>2})",
+                total_time / 3600,
+                total_time % 3600 / 60,
+                total_time % 60
+            ),
         ));
-        addstr(&format!(
-            "+{:-<1$}+\n",
-            "",
-            title_w + author_w + time_w as usize + space * 2 + 2
-        ));
+        addch(ACS_VLINE());
+        addstr(&format!("\n"));
+        {
+            addch(ACS_LLCORNER());
+            addch(ACS_HLINE());
+            for _ in 0..(title_w + author_w + time_w as usize + space * 2) {
+                addch(ACS_HLINE());
+            }
+            addch(ACS_HLINE());
+            addch(ACS_LRCORNER());
+        }
         let choice = getch();
         match choice as u8 as char {
             'q' => break,
@@ -216,12 +235,6 @@ fn main() {
                 }
                 if curr_y >= songs.len() + now_playing.len() {
                     curr_y = songs.len() + now_playing.len() - 1;
-                }
-            }
-            '\t' => {
-                time_type = match time_type {
-                    TimeType::Seconds => TimeType::SecAndMins,
-                    TimeType::SecAndMins => TimeType::Seconds,
                 }
             }
             _ => {}
