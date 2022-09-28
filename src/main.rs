@@ -199,6 +199,19 @@ fn main() {
         ));
         addch(ACS_VLINE());
         addstr(&format!("\n"));
+
+        {
+            let message = "Songs in queue";
+            addch(ACS_VLINE());
+            addstr(&format!(
+                " {message}:{num:>s1$} ",
+                num = now_playing.len(),
+                s1 = title_w + author_w + time_w as usize + space * 2 - 1 - message.chars().count()
+            ));
+            addch(ACS_VLINE());
+            addstr("\n");
+        }
+
         {
             addch(ACS_LLCORNER());
             addch(ACS_HLINE());
@@ -255,6 +268,7 @@ fn main() {
                     ("k/j", "Move up and down"),
                     ("TAB", "Switch between song list and queue"),
                     ("q", "Quit program"),
+                    ("ENTER", "Add/remove highlighted element from queue"),
                 ]);
 
                 let (mut long_key, mut long_value) = (0, 0);
