@@ -237,6 +237,59 @@ fn main() {
                     curr_y = songs.len() + now_playing.len() - 1;
                 }
             }
+            '\t' => {
+                curr_y = {
+                    if curr_y < songs.len() && now_playing.len() > 0 {
+                        songs.len()
+                    } else if curr_y >= songs.len() && songs.len() > 0 {
+                        0
+                    } else {
+                        curr_y
+                    }
+                };
+            }
+            '?' => {
+                clear();
+                use std::collections::HashMap;
+                let controls = HashMap::from([
+                    ("k/j", "Move up and down"),
+                    ("TAB", "Switch between song list and queue"),
+                    ("q", "Quit program"),
+                ]);
+
+                let (mut long_key, mut long_value) = (0, 0);
+
+                for (key, value) in &controls {
+                    long_key = std::cmp::max(long_key, key.chars().count());
+                    long_value = std::cmp::max(long_value, value.chars().count());
+                }
+
+                let label = " [ CONTROLS ] ";
+                addch(ACS_ULCORNER());
+                addch(ACS_HLINE());
+                addstr(&label);
+                for _ in label.chars().count()..(long_key + long_value + space + 1) {
+                    addch(ACS_HLINE());
+                }
+                addch(ACS_URCORNER());
+                addstr("\n");
+
+                for (key, value) in &controls {
+                    addch(ACS_VLINE());
+                    addstr(&format!(
+                        " {key:<long_key$}{divider:^space$}{value:<long_value$} "
+                    ));
+                    addch(ACS_VLINE());
+                    addstr("\n");
+                }
+                addch(ACS_LLCORNER());
+                addch(ACS_HLINE());
+                for _ in 0..(long_key + long_value + space + 1) {
+                    addch(ACS_HLINE());
+                }
+                addch(ACS_LRCORNER());
+                getch();
+            }
             _ => {}
         }
     }
