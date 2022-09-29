@@ -33,61 +33,34 @@ fn main() {
     let song_label = "SONGS".to_string();
     let playing_label = "QUEUE".to_string();
     let space = 3;
-    let divider = " ";
+    let divider = "-";
 
     let mut curr_y: usize = 0;
-    let mut songs: Vec<Song> = vec![
-        Song::new(
-            "Breaking Bad Theme".to_string(),
-            76,
-            "Dave Porter".to_string(),
-        ),
-        Song::new(
-            "Pick Yourself Up".to_string(),
-            192,
-            "Nat \"King\" Cole".to_string(),
-        ),
-        Song::new("Baby Blue".to_string(), 217, "Badfinger".to_string()),
-        Song::new("Tuyo".to_string(), 152, "Rodrigo Amarante".to_string()),
-        Song::new(
-            "Escape (The Pina Colada Song)".to_string(),
-            276,
-            "Rupert Holmes".to_string(),
-        ),
-        Song::new(
-            "Al Compas De Mi Caballo".to_string(),
-            215,
-            "Los Imperials".to_string(),
-        ),
-        Song::new(
-            "Negro y Azul".to_string(),
-            205,
-            "Los Cuates de Sinaloa".to_string(),
-        ),
-        Song::new(
-            "A Dreamer's Holiday".to_string(),
-            160,
-            "Buddy Clark".to_string(),
-        ),
-        Song::new("El Paso".to_string(), 259, "Marty Robbins".to_string()),
-        Song::new("POP!".to_string(), 168, "Im Nayeon".to_string()),
-        Song::new("The Feels".to_string(), 198, "TWICE".to_string()),
-        Song::new(
-            "Crystal Blue Persuasion".to_string(),
+    let song_list = [
+        ("Breaking Bad Theme", 76, "Dave Porter"),
+        ("Pick Yourself Up", 192, "Nat \"King\" Cole"),
+        ("Baby Blue", 217, "Badfinger"),
+        ("Tuyo", 152, "Rodrigo Amarante"),
+        ("Escape (The Pina Colada Song)", 276, "Rupert Holmes"),
+        ("Al Compas De Mi Caballo", 215, "Los Imperials"),
+        ("Negro y Azul", 205, "Los Cuates de Sinaloa"),
+        ("A Dreamer's Holiday", 160, "Buddy Clark"),
+        ("El Paso", 259, "Marty Robbins"),
+        ("POP!", 168, "Im Nayeon"),
+        ("The Feels", 198, "TWICE"),
+        (
+            "Crystal Blue Persuasion",
             242,
-            "Tommy James & The Shondells".to_string(),
+            "Tommy James & The Shondells",
         ),
-        Song::new(
-            "Dos Gardenias".to_string(),
-            182,
-            "Angel Canales".to_string(),
-        ),
-        Song::new(
-            "Los Pistoleros".to_string(),
-            210,
-            "Jonaty Garcia".to_string(),
-        ),
+        ("Dos Gardenias", 182, "Angel Canales"),
+        ("Los Pistoleros", 210, "Jonaty Garcia"),
     ];
+    let mut songs: Vec<Song> = vec![];
+
+    for (title, length, author) in song_list {
+        songs.push(Song::new(title.to_string(), length, author.to_string()));
+    }
 
     let mut now_playing: Vec<Song> = Vec::new();
     loop {
@@ -98,16 +71,18 @@ fn main() {
         let time_w: u8 = 6;
         let mut total_time = 0;
 
+        // Find longest title and author of each song in songs and now_playing
         for song in songs.iter() {
             title_w = std::cmp::max(song.title.chars().count(), title_w);
             author_w = std::cmp::max(song.author.chars().count(), author_w);
         }
-
         for song in now_playing.iter() {
             title_w = std::cmp::max(song.title.chars().count(), title_w);
             author_w = std::cmp::max(song.author.chars().count(), author_w);
             total_time += song.length;
         }
+
+        //Print label for song list, $songs
         {
             addch(ACS_ULCORNER());
             addch(ACS_HLINE());
@@ -119,6 +94,8 @@ fn main() {
             addch(ACS_HLINE());
             addch(ACS_URCORNER());
         }
+
+        // Prints song list, $songs
         for (index, song) in songs.iter().enumerate() {
             mv((index + 1).try_into().unwrap(), 0);
             let pair = if index == curr_y {
@@ -141,8 +118,10 @@ fn main() {
             attroff(COLOR_PAIR(pair));
             addch(ACS_VLINE());
         }
-        mv((songs.len() + 1).try_into().unwrap(), 0);
+
+        // Print label for queue, $now_playing
         {
+            mv((songs.len() + 1).try_into().unwrap(), 0);
             addch(ACS_LTEE());
             addch(ACS_HLINE());
             let label = format!(" [ {} ] ", playing_label);
@@ -154,6 +133,8 @@ fn main() {
             addch(ACS_RTEE());
             addstr(&format!("\n"));
         }
+
+        // Print queue, $now_playing
         for (index, song) in now_playing.iter().enumerate() {
             mv((index + songs.len() + 2).try_into().unwrap(), 0);
             let pair = if curr_y >= songs.len() && index == curr_y - songs.len() {
@@ -177,14 +158,40 @@ fn main() {
             addch(ACS_VLINE());
             addstr(&format!("\n"));
         }
+
+        //Print label-less divider
         {
             addch(ACS_LTEE());
             for _ in 0..(title_w + author_w + space * 2 + 8) {
                 addch(ACS_HLINE());
             }
             addch(ACS_RTEE());
+            addstr("\n");
         }
-        addstr(&format!("\n"));
+
+        //Print songs in queue
+        if now_playing.len() <= 0 {
+            let message = "No songs in queue";
+            addch(ACS_VLINE());
+            addstr(&format!(
+                " {message:<s1$} ",
+                s1 = title_w + author_w + time_w as usize + space * 2
+            ));
+            addch(ACS_VLINE());
+            addstr("\n");
+        } else {
+            let message = "Songs in queue";
+            addch(ACS_VLINE());
+            addstr(&format!(
+                " {message}:{num:>s1$} ",
+                num = now_playing.len(),
+                s1 = title_w + author_w + time_w as usize + space * 2 - 1 - message.chars().count()
+            ));
+            addch(ACS_VLINE());
+            addstr("\n");
+        }
+
+        //Print total time
         addch(ACS_VLINE());
         addstr(&format!(
             " {message:<m_width$} {time} ",
@@ -200,17 +207,7 @@ fn main() {
         addch(ACS_VLINE());
         addstr(&format!("\n"));
 
-        {
-            let message = "Songs in queue";
-            addch(ACS_VLINE());
-            addstr(&format!(
-                " {message}:{num:>s1$} ",
-                num = now_playing.len(),
-                s1 = title_w + author_w + time_w as usize + space * 2 - 1 - message.chars().count()
-            ));
-            addch(ACS_VLINE());
-            addstr("\n");
-        }
+        //Print help message
         {
             let message = "Press `?` for help";
             addch(ACS_VLINE());
@@ -221,6 +218,8 @@ fn main() {
             addch(ACS_VLINE());
             addstr("\n");
         }
+
+        //Print ending border
         {
             addch(ACS_LLCORNER());
             addch(ACS_HLINE());
@@ -230,6 +229,7 @@ fn main() {
             addch(ACS_HLINE());
             addch(ACS_LRCORNER());
         }
+
         let choice = getch();
         match choice as u8 as char {
             'q' => break,
