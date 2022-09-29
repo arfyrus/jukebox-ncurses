@@ -211,7 +211,16 @@ fn main() {
             addch(ACS_VLINE());
             addstr("\n");
         }
-
+        {
+            let message = "Press `?` for help";
+            addch(ACS_VLINE());
+            addstr(&format!(
+                " {message:<s1$} ",
+                s1 = title_w + author_w + time_w as usize + space * 2
+            ));
+            addch(ACS_VLINE());
+            addstr("\n");
+        }
         {
             addch(ACS_LLCORNER());
             addch(ACS_HLINE());
@@ -292,6 +301,22 @@ fn main() {
                     addch(ACS_VLINE());
                     addstr(&format!(
                         " {key:<long_key$}{divider:^space$}{value:<long_value$} "
+                    ));
+                    addch(ACS_VLINE());
+                    addstr("\n");
+                }
+                {
+                    addch(ACS_LTEE());
+                    for _ in 0..(long_key + long_value + space + 2) {
+                        addch(ACS_HLINE());
+                    }
+                    addch(ACS_RTEE());
+                    addstr("\n");
+                    let message = "Press any key to exit this menu";
+                    addch(ACS_VLINE());
+                    addstr(&format!(
+                        " {message:<s1$} ",
+                        s1 = long_key + long_value + space
                     ));
                     addch(ACS_VLINE());
                     addstr("\n");
